@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Full NRIC generator</title>
+    
+    <script>
+      //const masked_nric_str = document.getElementById("masked_nric").value;
+      function is_number(char) {
+        return !isNaN(parseInt(char));
+      }
+
+      function checkInput() {
+        var masked_nric_str = document.getElementById("masked_nric").value;
+        if (
+          masked_nric_str.length === 4 &&
+          is_number(masked_nric_str[0]) &&
+          is_number(masked_nric_str[1]) &&
+          is_number(masked_nric_str[2])
+        ) {
+          //generate nric
+          generate_full_nric(
+            masked_nric_str.substr(0, 3) + masked_nric_str[3].toUpperCase()
+          );
+        } else {
+          alert("Please enter a valid masked NRIC!");
+        }
+      }
+
+      /*
+      The structure of the Singapore NRIC/FIN number is one initial letter (S,T,F,G,M) followed by seven digits and one letter behind.
+      The last letter is obtained from the 7 digits using the modulus eleven method. The steps to obtain the last letter are as below:
+
+      1. Multiply each digit in the NRIC/FIN number by its weight.
+      2. Add together the above products.
+      3. If the first digit is G or T, add 4 to the sum obtained. If the first digit is M, add 3 to the sum obtained.
+      4. Divide the resulting sum by 11 to obtain the remainder.
+      5. Subtract (remainder + 1) from 11 to obtain the check digit.
+      6. Check the check digit against the table to obtain the last letter.
+
+      The following table shows the weight for each digit:
+      [2, 7, 6, 5, 4, 3, 2]
+
+      The following tables are used to check the check digit corresponding letter.
+
+      If the first digit is S or T:
+      [Check Digit] [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      [Last Letter] [A, B, C, D, E, F, G, H, I, Z, J ]
+
+      If the first digit is G or F:
+      [Check Digit] [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      [Last Letter] [K, L, M, N, P, Q, R, T, U, W, X ]
+
+      If the first digit is M:
+      [Check Digit] [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      [Last Letter] [K, L, J, N, P, Q, R, T, U, W, X ]
+      */
+
+      function generate_full_nric(masked_nric_validated) {
+        var weight = [2, 7, 6, 5, 4, 3, 2];
+        var checksum_for_s_t = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "Z", "J"];
+        var checksum_for_f_g = ["K", "L", "M", "N", "P", "Q", "R", "T", "U", "W", "X"];
+        var checksum_for_m = ["K", "L", "J", "N", "P", "Q", "R", "T", "U", "W", "X"];
+        var array_for_s = [];
+        var array_for_t = [];
+        var array_for_g = [];
+        var array_for_f = [];
+        var array_for_m = [];
+
+        for (let i = 0; i < 10000; i++) {
+          //i < 10000    <<<<<<<<<<<< CHANGE TO LOOP 10,000 TIMES FOR FULL RUN <<<<<<<<
+          var current_7_num =
+            String(i).padStart(4, "0") + masked_nric_validated.substr(0, 3);
+          var sum_of_product = 0;
+          for (let j = 0; j < 7; j++) {
+            //multiply the weight
+            sum_of_product += parseInt(current_7_num[j]) * weight[j];
+          }
+          // Check if checksum match last char
+          // Check for prefix "S"
+          if (
+            checksum_for_s_t[11 - ((sum_of_product % 11) + 1)] ==
+            masked_nric_validated[3]
+          ) {
+            array_for_s.push("S" + current_7_num + masked_nric_validated[3]);
+          }
+
+          //Check for prefix "T"
+          if (
+            checksum_for_s_t[11 - (((sum_of_product + 4) % 11) + 1)] ==
+            masked_nric_validated[3]
+          ) {
+            array_for_t.push("T" + current_7_num + masked_nric_validated[3]);
+          }
+
+          // Check for prefix "F"
+          if (
+            checksum_for_f_g[11 - ((sum_of_product % 11) + 1)] ==
+            masked_nric_validated[3]
+          ) {
+            array_for_f.push("F" + current_7_num + masked_nric_validated[3]);
+          }
+
+          //Check for prefix "G"
+          if (
+            checksum_for_f_g[11 - (((sum_of_product + 4) % 11) + 1)] ==
+            masked_nric_validated[3]
+          ) {
+            array_for_g.push("G" + current_7_num + masked_nric_validated[3]);
+          }
+
+          //Check for prefix "M"
+          if (
+            checksum_for_m[11 - (((sum_of_product + 3) % 11) + 1)] ==
+            masked_nric_validated[3]
+          ) {
+            array_for_m.push("M" + current_7_num + masked_nric_validated[3]);
+          }
+        }
+        // Display generated NRIC list
+        let ls_prefix_s = "";
+        for (let s_index = 0; s_index < array_for_s.length; s_index++) {
+          ls_prefix_s += "<li>" + array_for_s[s_index] + "</li>";
+        }
+        let ls_prefix_t = "";
+        for (let t_index = 0; t_index < array_for_t.length; t_index++) {
+          ls_prefix_t += "<li>" + array_for_t[t_index] + "</li>";
+        }
+        let ls_prefix_f = "";
+        for (let f_index = 0; f_index < array_for_f.length; f_index++) {
+          ls_prefix_f += "<li>" + array_for_f[f_index] + "</li>";
+        }
+        let ls_prefix_g = "";
+        for (let g_index = 0; g_index < array_for_g.length; g_index++) {
+          ls_prefix_g += "<li>" + array_for_g[g_index] + "</li>";
+        }
+        let ls_prefix_m = "";
+        for (let m_index = 0; m_index < array_for_m.length; m_index++) {
+          ls_prefix_m += "<li>" + array_for_m[m_index] + "</li>";
+        }
+        
+        document.getElementById("output_nric").border = '1';
+        document.getElementById("output_nric").innerHTML = 
+          '<tr><th id="th1">&nbsp;</th><th id="th2">&nbsp;</th><th id="th3">&nbsp;</th></tr>' +
+          '<tr><td id="td1">&nbsp;</td><td id="td2">&nbsp;</td><td id="td3">&nbsp;</td></tr>';
+        
+        if (checksum_for_s_t.indexOf(masked_nric_validated[3]) >= 0) {
+          document.getElementById("th1").innerHTML = "Prefix 'S'";
+          document.getElementById("th2").innerHTML = "Prefix 'T'";
+          document.getElementById("td1").innerHTML = '<ol style="margin: 0px 10px;">' + ls_prefix_s + '</ol>';
+          document.getElementById("td2").innerHTML = '<ol style="margin: 0px 10px;">' + ls_prefix_t + '</ol>';
+        } else if (checksum_for_f_g.indexOf(masked_nric_validated[3]) >= 0 || checksum_for_m.indexOf(masked_nric_validated[3]) >= 0) {
+          document.getElementById("th1").innerHTML = "Prefix 'F'";
+          document.getElementById("th2").innerHTML = "Prefix 'G'";
+          document.getElementById("th3").innerHTML = "Prefix 'M'";
+          document.getElementById("td1").innerHTML = '<ol style="margin: 0px 10px;">' + ls_prefix_f + '</ol>';
+          document.getElementById("td2").innerHTML = '<ol style="margin: 0px 10px;">' + ls_prefix_g + '</ol>';
+          document.getElementById("td3").innerHTML = '<ol style="margin: 0px 10px;">' + ls_prefix_m + '</ol>';
+        } else {
+          document.getElementById("output_nric").innerHTML = "";
+        }
+      }
+
+      
+      function clearOutput() {
+        document.getElementById("output_nric").border = '0';
+        document.getElementById("output_nric").innerHTML = "";
+      }
+    </script>
+  </head>
+  <body>
+    <!--
+      The body includes the content you see in the page
+      Each element is defined using tags, like this <div></div>
+      The attributes like class="wrapper" let us style elements in the CSS
+    -->
+    <h2>Full NRIC generator from masked NRIC</h2>
+
+    <p>Masked NRIC (Last 3 digits + Last letter): <input id="masked_nric" /></p>
+
+    <p>
+      <button type="button" onclick="checkInput()">Generate NRIC!</button>
+      &nbsp;
+      <button type="button" onclick="clearOutput()">Clear</button>
+    </p>
+
+    <table id="output_nric" border="0">
+      <tr>
+        <th id="th1">&nbsp;</th>
+        <th id="th2">&nbsp;</th>
+        <th id="th3">&nbsp;</th>
+      </tr>
+      <tr>
+        <td id="td1">&nbsp;</td>
+        <td id="td2">&nbsp;</td>
+        <td id="td3">&nbsp;</td>
+      </tr>
+    </table>
+
+    <!-- The footer holds our remix button — you can keep or delete it ✂ -->
+    <footer class="footer">
+      <div class="links"></div>
+      <span id="curr_year"></span>
+      <script>
+        var d = new Date();
+        document.getElementById("curr_year").innerHTML =
+          "&copy; FKC " + d.getFullYear();
+      </script>
+      <p style="font-size: small;">
+        Under the Singapore Personal Data Protection Commission's (PDPC) Technical Guide to NRIC Advisory guidelines, organisations using a masked NRIC have to be the last 3 digits & last letter of the user NRIC.<br/>
+        This project proves that with a 3-digit masked NRIC with a known birth year, we can generate 9 sets of valid NRIC. However, with 4 digits masked NRIC, we can narrow the identity to just 1 or 2 full NRIC.
+      </p>
+    </footer>
+  </body>
+</html>
